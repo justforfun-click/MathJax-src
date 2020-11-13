@@ -405,6 +405,7 @@ var CONST = 0, UNARY = 1, BINARY = 2, INFIX = 3, LEFTBRACKET = 4,
     MATRIX = 14,*/ UNARYUNDEROVER = 15; // token types
 
 var AMquote = {input:"\"",   tag:"mtext", output:"mbox", tex:null, ttype:TEXT};
+var AMDoubleBackQuote = {input:"``", tag:"mtext", output:"mbox", text: null, ttype:TEXT};
 
 var AMsymbols = [
 //some greek symbols
@@ -643,7 +644,7 @@ var AMsymbols = [
 {input:"mbox", tag:"mtext", output:"mbox", tex:null, ttype:TEXT},
 {input:"color", tag:"mstyle", ttype:BINARY},
 {input:"cancel", tag:"menclose", output:"cancel", tex:null, ttype:UNARY},
-AMquote,
+AMquote,AMDoubleBackQuote,
 {input:"bb", tag:"mstyle", atname:"mathvariant", atval:"bold", output:"bb", tex:null, ttype:UNARY},
 {input:"mathbf", tag:"mstyle", atname:"mathvariant", atval:"bold", output:"mathbf", tex:null, ttype:UNARY},
 {input:"sf", tag:"mstyle", atname:"mathvariant", atval:"sans-serif", output:"sf", tex:null, ttype:UNARY},
@@ -834,14 +835,15 @@ function AMparseSexpr(str) { //parses str and returns [node,tailstr]
     }
     return [node,result[1]];
   case TEXT:
-      if (symbol!=AMquote) str = AMremoveCharsAndBlanks(str,symbol.input.length);
+      if (symbol!=AMquote && symbol!=AMDoubleBackQuote) str = AMremoveCharsAndBlanks(str,symbol.input.length);
       if (str.charAt(0)=="{") i=str.indexOf("}");
       else if (str.charAt(0)=="(") i=str.indexOf(")");
       else if (str.charAt(0)=="[") i=str.indexOf("]");
       else if (symbol==AMquote) i=str.slice(1).indexOf("\"")+1;
+      else if (symbol==AMDoubleBackQuote) i=str.slice(2).indexOf("``")+2;
       else i = 0;
       if (i==-1) i = str.length;
-      st = str.slice(1,i);
+      st = str.slice(symbol==AMDoubleBackQuote?2:1,i);
       if (st.charAt(0) == " ") {
         node = createMmlNode("mspace");
         node.setAttribute("width","1ex");
@@ -854,7 +856,7 @@ function AMparseSexpr(str) { //parses str and returns [node,tailstr]
         node.setAttribute("width","1ex");
         newFrag.appendChild(node);
       }
-      str = AMremoveCharsAndBlanks(str,i+1);
+      str = AMremoveCharsAndBlanks(str,i+(symbol==AMDoubleBackQuote?2:1));
       return [createMmlNode("mrow",newFrag),str];
   case UNARYUNDEROVER:
   case UNARY:
